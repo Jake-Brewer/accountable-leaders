@@ -22,9 +22,9 @@ async def get_youtube_transcript(video_url):
         except Exception as e:
             print("No consent dialog to dismiss.")
 
-        # Scroll down to ensure all controls are visible
-        await page.evaluate("window.scrollBy(0, 500)")
-        await page.wait_for_timeout(2000)
+        # Scroll down further to ensure all controls are visible
+        await page.evaluate("window.scrollBy(0, 1000)")
+        await page.wait_for_timeout(3000)
 
         # Dismiss overlays/popups after scrolling
         try:
@@ -63,6 +63,15 @@ async def get_youtube_transcript(video_url):
                         await page.wait_for_timeout(3000)
                         more_clicked = True
                         break
+                    else:
+                        # If not visible, try clicking by coordinates
+                        box = await btn.bounding_box()
+                        if box:
+                            await page.mouse.click(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+                            print(f"Clicked 'More' button {idx} by coordinates, waiting 3 seconds...")
+                            await page.wait_for_timeout(3000)
+                            more_clicked = True
+                            break
                 except Exception as e:
                     print(f"Error clicking 'More' button {idx}: {e}")
         except Exception as e:
