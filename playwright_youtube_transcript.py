@@ -47,27 +47,33 @@ async def get_youtube_transcript(video_url):
             except Exception as e:
                 print(f"Error reading button: {e}")
 
-        # Try to find and click the 'More' button
+        # Try to find and click the 'Show transcript' button directly
+        transcript_clicked = False
         try:
-            more_button = await page.wait_for_selector('button[aria-label="More"]', timeout=10000)
-            await more_button.click()
-            print("Clicked 'More', waiting 2 seconds...")
-            await page.wait_for_timeout(2000)
+            show_transcript_btn = await page.query_selector('button[aria-label="Show transcript"]')
+            if show_transcript_btn:
+                await show_transcript_btn.click()
+                print("Clicked 'Show transcript' button directly, waiting 5 seconds...")
+                await page.wait_for_timeout(5000)
+                transcript_clicked = True
         except Exception as e:
-            print("Could not find/click 'More' button:", e)
-            await browser.close()
-            return
+            print("Could not click 'Show transcript' button directly:", e)
 
-        # Click 'Show transcript' in the menu
-        try:
-            transcript_button = await page.wait_for_selector('ytd-menu-service-item-renderer:has-text("Show transcript")', timeout=10000)
-            await transcript_button.click()
-            print("Clicked 'Show transcript', waiting 5 seconds...")
-            await page.wait_for_timeout(5000)
-        except Exception as e:
-            print("Could not find/click 'Show transcript' option:", e)
-            await browser.close()
-            return
+        # If not found, try the 'More actions' menu
+        if not transcript_clicked:
+            try:
+                more_button = await page.wait_for_selector('button[aria-label="More actions"]', timeout=10000)
+                await more_button.click()
+                print("Clicked 'More actions', waiting 2 seconds...")
+                await page.wait_for_timeout(2000)
+                transcript_button = await page.wait_for_selector('ytd-menu-service-item-renderer:has-text("Show transcript")', timeout=10000)
+                await transcript_button.click()
+                print("Clicked 'Show transcript' from menu, waiting 5 seconds...")
+                await page.wait_for_timeout(5000)
+            except Exception as e:
+                print("Could not find/click 'More actions' or 'Show transcript' option:", e)
+                await browser.close()
+                return
 
         # Wait for transcript panel and extract text
         try:
