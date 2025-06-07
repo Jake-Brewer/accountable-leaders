@@ -4,10 +4,12 @@ import time
 import os
 
 VIDEO_URL = "https://www.youtube.com/watch?v=TifRTlamAcs"
+USER_DATA_DIR = "playwright_user_data"
 
 async def get_youtube_transcript(video_url):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        # Use persistent context for sign-in
+        browser = await p.chromium.launch_persistent_context(USER_DATA_DIR, headless=False)
         page = await browser.new_page()
         await page.goto(video_url)
         print("Navigated to video, waiting 5 seconds...")
@@ -53,7 +55,9 @@ async def get_youtube_transcript(video_url):
         print("Screenshot saved as 'youtube_page.png'.")
 
         # Prompt for signing in if needed
-        print("If the 'More' button is not interactable, you may need to sign in. Please sign in manually if prompted.")
+        print("If you are not signed in, please sign in now. Your session will be saved for future runs.")
+        print("After signing in, close the browser window to continue.")
+        input("Press Enter after you have signed in and closed the browser window...")
 
         # Try all 'More' buttons (the one that opens the menu, not the report dialog)
         more_clicked = False
