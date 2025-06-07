@@ -57,6 +57,10 @@ def download_youtube_video(url, output_path):
         return False
 
 def main():
+    # Delete the old HTML file if it exists
+    if os.path.exists('interview_library.html'):
+        os.remove('interview_library.html')
+
     # Base URL for the website
     base_url = "https://www.kennesaw.edu"
     
@@ -75,9 +79,9 @@ def main():
     
     # Process each row in the table
     interviews = []
-    for row in table.find_all('tr')[1:]:  # Skip header row
+    for row in table.find_all('tr'):
         cols = row.find_all('td')
-        if len(cols) >= 3:
+        if len(cols) == 3:
             leader_name = cols[0].get_text(strip=True)
             organization = cols[1].get_text(strip=True)
             media_link = cols[0].find('a')['href'] if cols[0].find('a') else None
@@ -144,6 +148,95 @@ def main():
     # Save markdown file
     with open('interview_library.md', 'w', encoding='utf-8') as f:
         f.write(markdown_content)
+
+    # Generate HTML table
+    html_content = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accountable Leaders Interview Library</title>
+    <style>
+        body { font-family: 'Montserrat', Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        .container { max-width: 1100px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 32px 32px 24px 32px; }
+        h1 { text-align: center; font-size: 2.2rem; font-weight: 700; margin-bottom: 32px; margin-top: 0; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 0 auto 24px auto; background: #fff; }
+        thead tr { background: #FFD233; }
+        th { color: #222; font-weight: 700; padding: 14px 10px; font-size: 1rem; border-bottom: 2px solid #e0e0e0; text-align: left; letter-spacing: 0.03em; }
+        td { padding: 12px 10px; border-bottom: 1px solid #e0e0e0; font-size: 1rem; color: #222; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: #faf9f6; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.95em; font-weight: 600; text-decoration: none; }
+        .badge-local { background: #e8f5e9; color: #2e7d32; border: 1px solid #b2dfdb; }
+        .badge-remote { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+        .badge-pending { background: #fffde7; color: #ef6c00; border: 1px solid #ffe082; }
+        .legend { margin: 18px 0 30px 0; font-size: 1rem; }
+        .legend span { margin-right: 24px; }
+        .notes { margin-top: 32px; font-size: 1rem; color: #444; }
+        .notes a { color: #1565c0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Life Stories</h1>
+        <div class="legend">
+            <span class="badge badge-local">Local Copy</span>
+            <span class="badge badge-remote">Remote Only</span>
+            <span class="badge badge-pending">Pending</span>
+        </div>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Leader</th>
+                    <th>Organization</th>
+                    <th>Media</th>
+                    <th>Transcript</th>
+                    <th>YouTube Transcript (Plain)</th>
+                    <th>YouTube Transcript (Timestamped)</th>
+                </tr>
+            </thead>
+            <tbody>\n'''
+    for interview in interviews:
+        html_content += f'<tr>'
+        html_content += f'<td>{interview["leader"]}</td>'
+        html_content += f'<td>{interview["organization"]}</td>'
+        # Media
+        if interview['local_media'] and Path(interview['local_media']).exists():
+            html_content += f'<td><a class="badge badge-local" href="{interview["local_media"]}">Available</a></td>'
+        elif interview['media_link']:
+            html_content += f'<td><a class="badge badge-remote" href="{interview["media_link"]}">Remote Only</a></td>'
+        else:
+            html_content += f'<td><span class="badge badge-pending">Pending</span></td>'
+        # Transcript
+        if interview['local_transcript'] and Path(interview['local_transcript']).exists():
+            html_content += f'<td><a class="badge badge-local" href="{interview["local_transcript"]}">Available</a></td>'
+        elif interview['transcript_link']:
+            html_content += f'<td><a class="badge badge-remote" href="{interview["transcript_link"]}">Remote Only</a></td>'
+        else:
+            html_content += f'<td><span class="badge badge-pending">Pending</span></td>'
+        # YouTube Transcripts (not implemented)
+        html_content += f'<td><span class="badge badge-pending">Pending</span></td>'
+        html_content += f'<td><span class="badge badge-pending">Pending</span></td>'
+        html_content += f'</tr>\n'
+    html_content += '''            </tbody>
+        </table>
+        </div>
+        <div class="notes">
+            <strong>Notes:</strong>
+            <ul>
+                <li>All videos are in MP4 format</li>
+                <li>Official transcripts are in DOCX format</li>
+                <li>YouTube transcripts are in TXT format (when available)</li>
+                <li>Original source: <a href="https://www.kennesaw.edu/coles/centers/accountable-leaders-center/interview-library.php">Accountable Leaders Center Interview Library</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>'''
+    with open('interview_library.html', 'w', encoding='utf-8') as f:
+        f.write(html_content)
 
 if __name__ == "__main__":
     main() 
