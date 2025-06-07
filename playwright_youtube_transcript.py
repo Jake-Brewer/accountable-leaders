@@ -137,9 +137,25 @@ async def main():
     async with async_playwright() as p:
         browser = await p.firefox.launch_persistent_context(USER_DATA_DIR, headless=False)
         page = await browser.new_page()
-        print("If you are not signed in, please sign in now. Your session will be saved for future runs.")
-        print("After signing in, close the browser window to continue.")
-        input("Press Enter after you have signed in and closed the browser window...")
+        # Open the first video immediately
+        await page.goto(VIDEO_URLS[0])
+        print(f"Opened first video: {VIDEO_URLS[0]}")
+        await page.wait_for_timeout(5000)
+        # Check for sign-in prompt
+        sign_in = False
+        try:
+            # Look for common sign-in elements
+            if await page.query_selector('input[type="email"]') or await page.query_selector('text="Sign in"') or await page.query_selector('text="Forgot email?"'):
+                sign_in = True
+        except Exception:
+            pass
+        if sign_in:
+            print("You are not signed in. Please sign in now. Your session will be saved for future runs.")
+            print("After signing in, return to this terminal and press Enter to continue.")
+            input("Press Enter after you have signed in...")
+        else:
+            print("Already signed in. Proceeding with transcript extraction.")
+        # Now process all videos
         for idx, url in enumerate(VIDEO_URLS):
             await get_youtube_transcript(url, page, idx)
         await browser.close()
