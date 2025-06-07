@@ -47,17 +47,30 @@ async def get_youtube_transcript(video_url):
             except Exception as e:
                 print(f"Error reading button: {e}")
 
-        # Try to find and click the 'Show transcript' button directly
+        # Try to find and click all 'Show transcript' buttons
         transcript_clicked = False
         try:
-            show_transcript_btn = await page.query_selector('button[aria-label="Show transcript"]')
-            if show_transcript_btn:
-                await show_transcript_btn.click()
-                print("Clicked 'Show transcript' button directly, waiting 5 seconds...")
-                await page.wait_for_timeout(5000)
-                transcript_clicked = True
+            show_transcript_btns = await page.query_selector_all('button[aria-label="Show transcript"]')
+            print(f"Found {len(show_transcript_btns)} 'Show transcript' buttons.")
+            for idx, btn in enumerate(show_transcript_btns):
+                try:
+                    visible = await btn.is_visible()
+                    enabled = await btn.is_enabled()
+                    print(f"Trying button {idx}: visible={visible}, enabled={enabled}")
+                    if visible and enabled:
+                        await btn.click()
+                        print(f"Clicked 'Show transcript' button {idx}, waiting 5 seconds...")
+                        await page.wait_for_timeout(5000)
+                        # Check if transcript panel appeared
+                        panel = await page.query_selector('ytd-transcript-renderer')
+                        if panel:
+                            print("Transcript panel appeared!")
+                            transcript_clicked = True
+                            break
+                except Exception as e:
+                    print(f"Error clicking button {idx}: {e}")
         except Exception as e:
-            print("Could not click 'Show transcript' button directly:", e)
+            print("Could not click any 'Show transcript' button:", e)
 
         # If not found, try the 'More actions' menu
         if not transcript_clicked:
