@@ -97,7 +97,19 @@ async def get_youtube_transcript(video_url):
             except Exception as e:
                 print("Could not find/click 'Show transcript' option in menu:", e)
 
-        # If 'More' button is not interactable, try direct transcript URL
+        # If UI automation fails, try keyboard shortcut Shift+T
+        if not transcript_clicked:
+            try:
+                print("Trying keyboard shortcut Shift+T to open transcript panel...")
+                await page.keyboard.down('Shift')
+                await page.keyboard.press('t')
+                await page.keyboard.up('Shift')
+                await page.wait_for_timeout(5000)
+                transcript_clicked = True
+            except Exception as e:
+                print("Could not open transcript panel with keyboard shortcut:", e)
+
+        # If still not interactable, try direct transcript URL
         if not transcript_clicked:
             try:
                 # Construct the transcript URL
