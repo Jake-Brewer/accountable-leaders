@@ -26,22 +26,35 @@ async def get_youtube_transcript(video_url):
         await page.evaluate("window.scrollBy(0, 500)")
         await page.wait_for_timeout(2000)
 
-        # Print all button labels for debugging
+        # Dismiss overlays/popups after scrolling
+        try:
+            close_btn = await page.query_selector('button:has-text("Close")')
+            if close_btn:
+                await close_btn.click()
+                print("Dismissed overlay dialog.")
+                await page.wait_for_timeout(1000)
+        except Exception as e:
+            print("No overlay dialog to dismiss.")
+
+        # Print all button labels for debugging, with error handling
         buttons = await page.query_selector_all('button')
         print("Button labels on the page:")
         for btn in buttons:
-            label = await btn.get_attribute('aria-label')
-            text = await btn.inner_text()
-            print(f"aria-label: {label}, text: {text}")
+            try:
+                label = await btn.get_attribute('aria-label')
+                text = await btn.inner_text()
+                print(f"aria-label: {label}, text: {text}")
+            except Exception as e:
+                print(f"Error reading button: {e}")
 
-        # Try to find and click the 'More actions' button
+        # Try to find and click the 'More' button
         try:
-            more_button = await page.wait_for_selector('button[aria-label*="More actions"]', timeout=10000)
+            more_button = await page.wait_for_selector('button[aria-label="More"]', timeout=10000)
             await more_button.click()
-            print("Clicked 'More actions', waiting 2 seconds...")
+            print("Clicked 'More', waiting 2 seconds...")
             await page.wait_for_timeout(2000)
         except Exception as e:
-            print("Could not find/click 'More actions' button:", e)
+            print("Could not find/click 'More' button:", e)
             await browser.close()
             return
 
