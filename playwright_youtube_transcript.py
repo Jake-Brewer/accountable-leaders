@@ -4,12 +4,12 @@ import time
 import os
 
 VIDEO_URL = "https://www.youtube.com/watch?v=TifRTlamAcs"
-USER_DATA_DIR = "playwright_user_data"
+USER_DATA_DIR = "playwright_user_data_firefox"
 
 async def get_youtube_transcript(video_url):
     async with async_playwright() as p:
-        # Use persistent context for sign-in
-        browser = await p.chromium.launch_persistent_context(USER_DATA_DIR, headless=False)
+        # Use persistent context for sign-in, now with Firefox
+        browser = await p.firefox.launch_persistent_context(USER_DATA_DIR, headless=False)
         page = await browser.new_page()
         await page.goto(video_url)
         print("Navigated to video, waiting 5 seconds...")
