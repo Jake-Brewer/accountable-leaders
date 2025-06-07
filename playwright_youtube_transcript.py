@@ -47,28 +47,28 @@ async def get_youtube_transcript(video_url):
             except Exception as e:
                 print(f"Error reading button: {e}")
 
-        # Try all 'More actions' buttons
+        # Try all 'More' buttons (the one that opens the menu, not the report dialog)
         more_clicked = False
         try:
-            more_buttons = await page.query_selector_all('button[aria-label="More actions"]')
-            print(f"Found {len(more_buttons)} 'More actions' buttons.")
+            more_buttons = await page.query_selector_all('button[aria-label="More"]')
+            print(f"Found {len(more_buttons)} 'More' buttons.")
             for idx, btn in enumerate(more_buttons):
                 try:
                     visible = await btn.is_visible()
                     enabled = await btn.is_enabled()
-                    print(f"Trying 'More actions' button {idx}: visible={visible}, enabled={enabled}")
+                    print(f"Trying 'More' button {idx}: visible={visible}, enabled={enabled}")
                     if visible and enabled:
                         await btn.click()
-                        print(f"Clicked 'More actions' button {idx}, waiting 3 seconds...")
+                        print(f"Clicked 'More' button {idx}, waiting 3 seconds...")
                         await page.wait_for_timeout(3000)
                         more_clicked = True
                         break
                 except Exception as e:
-                    print(f"Error clicking 'More actions' button {idx}: {e}")
+                    print(f"Error clicking 'More' button {idx}: {e}")
         except Exception as e:
-            print("Could not click any 'More actions' button:", e)
+            print("Could not click any 'More' button:", e)
 
-        # After clicking 'More actions', look for 'Show transcript' menu item
+        # After clicking 'More', look for 'Show transcript' menu item
         transcript_clicked = False
         if more_clicked:
             try:
