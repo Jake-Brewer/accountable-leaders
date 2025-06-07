@@ -1,6 +1,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 import time
+import os
 
 VIDEO_URL = "https://www.youtube.com/watch?v=TifRTlamAcs"
 
@@ -46,6 +47,13 @@ async def get_youtube_transcript(video_url):
                 print(f"aria-label: {label}, text: {text}")
             except Exception as e:
                 print(f"Error reading button: {e}")
+
+        # Take a screenshot for debugging
+        await page.screenshot(path="youtube_page.png")
+        print("Screenshot saved as 'youtube_page.png'.")
+
+        # Prompt for signing in if needed
+        print("If the 'More' button is not interactable, you may need to sign in. Please sign in manually if prompted.")
 
         # Try all 'More' buttons (the one that opens the menu, not the report dialog)
         more_clicked = False
