@@ -97,6 +97,18 @@ async def get_youtube_transcript(video_url):
             except Exception as e:
                 print("Could not find/click 'Show transcript' option in menu:", e)
 
+        # If 'More' button is not interactable, try direct transcript URL
+        if not transcript_clicked:
+            try:
+                # Construct the transcript URL
+                transcript_url = f"{video_url}&t=0&transcript=1"
+                await page.goto(transcript_url)
+                print("Navigated to transcript URL, waiting 5 seconds...")
+                await page.wait_for_timeout(5000)
+                transcript_clicked = True
+            except Exception as e:
+                print("Could not navigate to transcript URL:", e)
+
         # Wait for transcript panel and extract text
         try:
             transcript_panel = await page.wait_for_selector('ytd-transcript-renderer', timeout=10000)
