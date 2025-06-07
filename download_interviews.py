@@ -77,6 +77,15 @@ def main():
         print("Could not find the interview table on the page")
         return
     
+    # Parse organization links from the table header if available
+    org_links = {}
+    for row in table.find_all('tr'):
+        cols = row.find_all('td')
+        if len(cols) == 3:
+            org_a = cols[1].find('a')
+            if org_a:
+                org_links[cols[1].get_text(strip=True)] = org_a['href']
+
     # Process each row in the table
     interviews = []
     for row in table.find_all('tr'):
@@ -175,6 +184,8 @@ def main():
         .legend span { margin-right: 24px; }
         .notes { margin-top: 32px; font-size: 1rem; color: #444; }
         .notes a { color: #1565c0; }
+        .external-link { color: #1565c0; text-decoration: underline; position: relative; padding-right: 16px; }
+        .external-link::after { content: '\2197'; font-size: 0.9em; position: absolute; right: 2px; top: 2px; }
     </style>
 </head>
 <body>
@@ -200,16 +211,25 @@ def main():
             <tbody>\n'''
     for interview in interviews:
         html_content += f'<tr>'
-        html_content += f'<td>{interview["leader"]}</td>'
-        html_content += f'<td>{interview["organization"]}</td>'
-        # Media
+        # Leader name as media link if available
+        if interview['media_link']:
+            html_content += f'<td><a href="{interview["media_link"]}" class="external-link" target="_blank" rel="noopener">{interview["leader"]}</a></td>'
+        else:
+            html_content += f'<td>{interview["leader"]}</td>'
+        # Organization as external link if available
+        org_url = org_links.get(interview['organization'])
+        if org_url:
+            html_content += f'<td><a href="{org_url}" class="external-link" target="_blank" rel="noopener">{interview["organization"]}</a></td>'
+        else:
+            html_content += f'<td>{interview["organization"]}</td>'
+        # Media badge
         if interview['local_media'] and Path(interview['local_media']).exists():
             html_content += f'<td><a class="badge badge-local" href="{interview["local_media"]}">Available</a></td>'
         elif interview['media_link']:
             html_content += f'<td><a class="badge badge-remote" href="{interview["media_link"]}">Remote Only</a></td>'
         else:
             html_content += f'<td><span class="badge badge-pending">Pending</span></td>'
-        # Transcript
+        # Transcript badge
         if interview['local_transcript'] and Path(interview['local_transcript']).exists():
             html_content += f'<td><a class="badge badge-local" href="{interview["local_transcript"]}">Available</a></td>'
         elif interview['transcript_link']:
